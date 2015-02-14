@@ -1,0 +1,21 @@
+<% site_root = File.join(conf['sites_folder'], vhost, "public") %>
+<% site_name = vhost %>
+<% error_log = File.join(conf['sites_folder'], vhost, "log", "nginx-error.log") %>
+<% access_log = File.join(conf['sites_folder'], vhost, "log", "nginx-access.log") %>
+
+server {
+	listen 80;
+	
+	root <%= site_root %>;
+	server_name <%= site_name %>;
+	error_log <%= error_log %>;
+    access_log <%= access_log %>;
+  
+	index index.php index.html;
+	
+	location / {
+		include /usr/local/etc/nginx/conf.d/php-fpm;
+		autoindex on; # just for development
+	}
+	
+}

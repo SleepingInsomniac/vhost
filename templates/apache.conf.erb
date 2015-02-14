@@ -1,0 +1,11 @@
+<% site_root = File.join(conf['sites_folder'], vhost, "public") %>
+<% site_name = vhost %>
+<% error_log = File.join(conf['sites_folder'], vhost, "log", "apache-error.log") %>
+<% access_log = File.join(conf['sites_folder'], vhost, "log", "apache-access.log") %>
+
+<VirtualHost *:80>
+	ServerName <%= site_name %>
+	DocumentRoot "<%= site_root %>"
+	ErrorLog "<%= error_log %>"
+	CustomLog "<%= access_log %>"
+</VirtualHost>

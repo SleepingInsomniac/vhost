@@ -1,50 +1,104 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
 require 'fileutils'
 require 'optparse'
+require 'erubis'
+require 'yaml'
 
-AV_PATH = '/usr/local/etc/apache2/2.4/sites-available/'
-EN_PATH = '/usr/local/etc/apache2/2.4/sites-enabled/'
-SITES_FOLDER = '/Volumes/webdrive'
+conf = YAML.load_file "vhosts.yml"
 
-def new_vhost(name)
-"
-<VirtualHost *:80>
-	ServerName #{name}
-	DocumentRoot \"#{File.join(SITES_FOLDER, name, "public")}\"
-	ErrorLog \"#{File.join(SITES_FOLDER, name, "log", "error.log")}\"
-	CustomLog \"#{File.join(SITES_FOLDER, name, "log", "access.log")}\" common
-</VirtualHost>
-"
-end
-
+conf['server_conf'] ||= '/usr/local/etc/nginx'
+conf['sites_folder'] ||= '/var/www'
+conf['default_template'] ||= 'nginx.conf.erb'
 
 filename = ARGV[0]
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: vhost [site] [options]"
+  opts.banner = "Usage: vhost NAME [options]"
+  
+  # opts.on("-s NAME", "--server NAME", "Server name") do |vhost|
+  #   options[:server] = vhost
+  # end
   
   opts.on("-c", "--create", "Create vhost") do |e|
-    abort "#{filename} exists!" if File.exist? File.join(AV_PATH, "#{filename}.conf")
-    File.open File.join(AV_PATH, "#{filename}.conf"), "w" do |f|
-      f.write new_vhost(filename)
-    end
+    options[:create] = e
+  end
+  
+  opts.on("--delete", "delete vhost") do |e|
+    options[:delete] = e
+  end
+  
+  opts.on("-m", "--modify", "Modify vhost") do |e|
+    options[:modify] = e
   end
   
   opts.on("-e", "--enable", "Enable vhost") do |e|
-    abort "#{filename} doesn't exist" unless File.exist? File.join(AV_PATH, "#{filename}.conf")
-    abort "#{filename} already enabled" if File.exist? File.join(EN_PATH, "#{filename}.conf")
-    File.symlink File.join(AV_PATH, "#{filename}.conf"), File.join(EN_PATH, "#{filename}.conf")
+    options[:enable] = e
   end
 
-  opts.on("-d", "--disable", "Disable vhost") do |d|
-    abort "#{filename} doesn't exist" unless File.exist? File.join(AV_PATH, "#{filename}.conf")
-    abort "#{filename} not enabled" unless File.exist? File.join(EN_PATH, "#{filename}.conf")
-    File.unlink File.join(EN_PATH, "#{filename}.conf")
+  opts.on("-d", "--disable", "Disable vhost") do |e|
+    options[:disable] = e
   end
   
-  opts.on("-r", "--restart", "Apache restart graceful") do |r|
-    `sudo apachectl graceful`
+  opts.on("-r", "--restart", "Run server restart command") do |e|
+    options[:restart] = e
+  end
+  
+  opts.on("--conf-dir PATH", "Specify configuration prefix") do |path|
+    conf['server_conf'] = path
+  end
+  
+  opts.on("--sites-dir PATH", "Specify sites folder") do |path|
+    conf['sites_folder'] = path
+  end
+  
+  opts.on("--template FILE", "Specify template") do |name|
+    conf['default_template'] = name
+  end
+  
+  opts.on("-h", "--help", "Prints this help") do
+    puts opts
+    exit
   end
   
 end.parse!
+
+vhost = ARGV[0]
+
+if options[:create]
+  abort "#{vhost} exists!" if File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")
+  
+  File.open File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf"), "w" do |f|
+    template = Erubis::Eruby.new File.read(File.join(File.expand_path(File.dirname(__FILE__)), 'templates', conf['default_template']))    
+    f.write template.result(vhost: vhost, conf: conf)
+  end
+end
+
+if options[:delete]
+  abort "#{vhost} doesn't exist" unless File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")
+  print "Really delete #{vhost}?: "
+  confirm = gets.chomp
+  if confirm =~ /y/i
+    File.unlink File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")
+    File.unlink File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf") if File.exist? File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf")
+  end
+end
+
+if options[:modify]
+  system %{open "#{File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")}"}
+end
+
+if options[:enable]
+  abort "#{vhost} doesn't exist" unless File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")
+  abort "#{vhost} already enabled" if File.exist? File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf")
+  File.symlink File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf"), File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf")
+end
+
+if options[:disable]
+  abort "#{vhost} doesn't exist" unless File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost}.conf")
+  abort "#{vhost} not enabled" unless File.exist? File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf")
+  File.unlink File.join(conf['server_conf'], 'sites-enabled', "#{vhost}.conf")
+end
+
+`#{conf['restart_cmd']}` if options[:restart]

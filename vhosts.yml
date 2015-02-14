@@ -1,0 +1,5 @@
+---
+server_conf: '/usr/local/etc/nginx'
+sites_folder: '/var/www'
+default_template: 'nginx.conf.erb'
+restart_cmd: 'sudo nginx -s reload'
