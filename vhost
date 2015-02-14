@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+require 'optparse'
+
+AV_PATH = '/usr/local/etc/apache2/2.4/sites-available/'
+EN_PATH = '/usr/local/etc/apache2/2.4/sites-enabled/'
+SITES_FOLDER = '/Volumes/webdrive'
+
+def new_vhost(name)
+"
+<VirtualHost *:80>
+	ServerName #{name}
+	DocumentRoot \"#{File.join(SITES_FOLDER, name, "public")}\"
+	ErrorLog \"#{File.join(SITES_FOLDER, name, "log", "error.log")}\"
+	CustomLog \"#{File.join(SITES_FOLDER, name, "log", "access.log")}\" common
+</VirtualHost>
+"
+end
+
+
+filename = ARGV[0]
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: vhost [site] [options]"
+  
+  opts.on("-c", "--create", "Create vhost") do |e|
+    abort "#{filename} exists!" if File.exist? File.join(AV_PATH, "#{filename}.conf")
+    File.open File.join(AV_PATH, "#{filename}.conf"), "w" do |f|
+      f.write new_vhost(filename)
+    end
+  end
+  
+  opts.on("-e", "--enable", "Enable vhost") do |e|
+    abort "#{filename} doesn't exist" unless File.exist? File.join(AV_PATH, "#{filename}.conf")
+    abort "#{filename} already enabled" if File.exist? File.join(EN_PATH, "#{filename}.conf")
+    File.symlink File.join(AV_PATH, "#{filename}.conf"), File.join(EN_PATH, "#{filename}.conf")
+  end
+
+  opts.on("-d", "--disable", "Disable vhost") do |d|
+    abort "#{filename} doesn't exist" unless File.exist? File.join(AV_PATH, "#{filename}.conf")
+    abort "#{filename} not enabled" unless File.exist? File.join(EN_PATH, "#{filename}.conf")
+    File.unlink File.join(EN_PATH, "#{filename}.conf")
+  end
+  
+  opts.on("-r", "--restart", "Apache restart graceful") do |r|
+    `sudo apachectl graceful`
+  end
+  
+end.parse!
