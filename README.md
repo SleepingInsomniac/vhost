@@ -1,2 +1,5 @@
 # vhost
-virtual hosts controller
+
+##install:
+`brew tap sleepinginsomniac/formulae`
+`brew install vhost`
