@@ -1,5 +1,5 @@
 # vhost
-A simple way to manage virtual hosts in nginx or apache.  
+A simple way to manage virtual hosts in nginx, apache, or other server software.  
 Create, delete, enable, and disable vitual hosts.
 
 Configurations are based on erb templates
@@ -14,23 +14,28 @@ vhost requires ruby to be installed
 ###*nix:
 
 	cd `path/to/vhost`
-    ./create_config
-    mv vhost /usr/local/bin/vhost
+	cp -R vhosts-config /usr/local/etc/vhosts-config
+    cp vhost /usr/local/bin/vhost
     chmod u+x /usr/local/bin/vhost
 
 ##Examples:
 
 	# Creates a new file based on the template in sites-available
 	vhost example.com -c
+
 	# Create enable and restart the server in one swift motion
 	vhost example.com -cer
+
 	# Disable a virtual host
-	vhost example.com -d  
+	vhost example.com -d
+
+	# Modify a virtual host
+	vhost example.com -m
 	
 for more options: `vhost -h`
 
 ##Configuration
-the default configuration is a simple yaml file:
+The default configuration is a simple yaml file. vhost could conceivably be used with any server that supports virtual hosts.
 
 ####Nginx:
 
