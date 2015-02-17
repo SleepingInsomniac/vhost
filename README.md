@@ -8,15 +8,15 @@ Configurations are based on erb templates
 vhost requires ruby to be installed
 ###Hombrew:
 
-    $ brew tap sleepinginsomniac/formulae
-    $ brew install vhost
-    
+	brew tap sleepinginsomniac/formulae
+	brew install vhost
+	
 ###*nix:
 
 	cd `path/to/vhost`
 	cp -R vhosts-config /usr/local/etc/vhosts-config
-    cp vhost /usr/local/bin/vhost
-    chmod u+x /usr/local/bin/vhost
+	cp vhost /usr/local/bin/vhost
+	chmod u+x /usr/local/bin/vhost
 
 ##Examples:
 
@@ -44,6 +44,7 @@ The default configuration is a simple yaml file. vhost could conceivably be used
 	sites_folder: '/var/www'
 	default_template: 'nginx.conf.erb'
 	restart_cmd: 'sudo nginx -s reload'
+	editor: emacs
 
 ####Apache:
 
@@ -52,4 +53,5 @@ The default configuration is a simple yaml file. vhost could conceivably be used
 	sites_folder: '/var/www'
 	default_template: 'apache.conf.erb'
 	restart_cmd: 'sudo apachectl graceful'
+	editor: emacs
 

@@ -14,8 +14,9 @@ server {
 	index index.php index.html;
 	
 	location / {
-		include /usr/local/etc/nginx/conf.d/php-fpm;
-		autoindex on; # just for development
+		# include /usr/local/etc/nginx/conf.d/php-fpm; # enable php
+		# passenger_enabled on # enabled passenger for rack based apps
+		# autoindex on; # just for development
 	}
 	
 }
