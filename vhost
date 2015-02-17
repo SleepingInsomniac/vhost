@@ -32,49 +32,54 @@ options = {}
 args = OptionParser.new do |opts|
   opts.banner = "Usage: vhost NAME [options]"
   
-  opts.on("-c", "--create", "Create vhost") do |e|
+  opts.on "-c", "--create", "Create vhost" do |e|
     options[:create] = e
   end
     
-  opts.on("-m", "--modify", "--edit", "Modify vhost") do |e|
+  opts.on "-m", "--modify", "--edit", "Modify vhost" do |e|
     options[:modify] = e
   end
   
-  opts.on("-e", "--enable", "Enable vhost") do |e|
+  opts.on "-e", "--enable", "Enable vhost" do |e|
     options[:enable] = e
   end
 
-  opts.on("-d", "--disable", "Disable vhost") do |e|
+  opts.on "-d", "--disable", "Disable vhost" do |e|
     options[:disable] = e
   end
   
-  opts.on("--delete", "delete vhost") do |e|
+  opts.on "--delete", "delete vhost" do |e|
     options[:delete] = e
   end
   
-  opts.on("-r", "--restart", "Run server restart command") do |e|
+  opts.on "-r", "--restart", "Run server restart command" do |e|
     options[:restart] = e
   end
     
-  opts.on("-l", "--list") do
+  opts.on "-l", "--list" do
     puts "Sites available:"
     system "ls", File.join(conf['server_conf'], 'sites-available')
     puts "\nSites enabled:"
     system "ls", File.join(conf['server_conf'], 'sites-enabled')
   end
   
-  opts.on("--list-available", "List sites available") do
+  opts.on "--list-available", "List sites available" do
     system "ls", File.join(conf['server_conf'], 'sites-available')
   end
   
-  opts.on("--list-enabled", "List sites enabled") do
+  opts.on "--list-enabled", "List sites enabled" do
     system "ls", File.join(conf['server_conf'], 'sites-enabled')
   end
   
   opts.separator ""
   opts.separator "Configuration options:"
   
-  opts.on("--show KEY", "Shows the configuration value for KEY") do |k|
+  opts.on "--edit-conf" do
+    system conf['editor'], File.join(config_path, "vhosts.yml")
+    exit 
+  end
+  
+  opts.on "--show KEY", "Shows the configuration value for KEY" do |k|
     puts conf[k]
     exit
   end
@@ -90,11 +95,11 @@ args = OptionParser.new do |opts|
     exit
   end
     
-  opts.on("--sites-dir PATH", "Specify sites folder") do |path|
+  opts.on "--sites-dir PATH", "Specify sites folder" do |path|
     conf['sites_folder'] = path
   end
   
-  opts.on("-t TEMPLATE", "--template TEMPLATE", "Use template") do |t|
+  opts.on "-t TEMPLATE", "--template TEMPLATE", "Use template" do |t|
     conf['default_template'] = t
     options[:template] = true
   end
@@ -102,12 +107,12 @@ args = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Common options:"
     
-  opts.on("-v", "--version", "Print version") do
+  opts.on "-v", "--version", "Print version" do
     puts "vhost - version #{VERSION}\nhttps://github.com/SleepingInsomniac/vhost"
     exit
   end
   
-  opts.on("-h", "--help", "Prints this help") do
+  opts.on "-h", "--help", "Prints this help" do
     puts opts
     exit
   end
