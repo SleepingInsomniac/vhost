@@ -55,31 +55,40 @@ args = OptionParser.new do |opts|
   opts.on "-r", "--restart", "Run server restart command" do |e|
     options[:restart] = e
   end
+  
+  opts.on "--create-folder", "create site folder structure" do |f|
+    options[:folder] = f
+  end
+  
+  opts.on "-p", "--path", "Show a site folder's path" do |p|
+    options[:path] = p
+  end
     
-  opts.on "-l", "--list" do
-    puts "Sites available:"
-    system "ls", File.join(conf['server_conf'], 'sites-available')
-    puts "\nSites enabled:"
-    system "ls", File.join(conf['server_conf'], 'sites-enabled')
+  opts.on "-l", "--list", "List sites" do |l|
+    options[:list] = l
   end
   
-  opts.on "--list-available", "List sites available" do
-    system "ls", File.join(conf['server_conf'], 'sites-available')
+  opts.on "--list-available", "List sites available" do |l|
+    options[:lista] = l
   end
   
-  opts.on "--list-enabled", "List sites enabled" do
-    system "ls", File.join(conf['server_conf'], 'sites-enabled')
+  opts.on "--list-enabled", "List sites enabled" do |l|
+    options[:liste] = l
   end
   
   opts.separator ""
   opts.separator "Configuration options:"
   
-  opts.on "--edit-conf" do
-    system conf['editor'], File.join(config_path, "vhosts.yml")
-    exit 
+  opts.on "-q", "--quiet" do |q|
+    options[:quiet] = q
   end
   
-  opts.on "-s", "--show", "Shows the configuration value for KEY" do |k|
+  opts.on "--edit-conf" do
+    system conf['editor'], File.join(config_path, "vhosts.yml")
+    exit
+  end
+  
+  opts.on "-s", "--show", "Shows the config location for a site" do |k|
     options[:show] = k
   end
   
@@ -106,7 +115,7 @@ args = OptionParser.new do |opts|
   
   opts.separator ""
   opts.separator "Common options:"
-    
+  
   opts.on "-v", "--version", "Print version" do
     puts "vhost - version #{VERSION}\nhttps://github.com/SleepingInsomniac/vhost"
     exit
@@ -118,6 +127,11 @@ args = OptionParser.new do |opts|
   end
   
 end.parse!
+
+@options = options
+def puts(*args)
+  super(*args) unless @options[:quiet]
+end
 
 test_path = File.join(conf['server_conf'], 'sites-available', "#{ARGV[0]}*")
 test_name = Dir[test_path].first
@@ -165,6 +179,20 @@ if options[:modify]
   end
 end
 
+if options[:folder] and not vhost.empty?
+  structure = ['/', '/public', '/log']
+  structure.each do |folder|
+    folder = File.join(conf['sites_folder'], vhost, folder)
+    FileUtils.mkdir_p folder
+    puts "Created #{folder}"
+  end
+end
+
+if options[:path] and not vhost.empty?
+  path = File.join(conf['sites_folder'], vhost)
+  puts path
+end
+
 if options[:enable]
   abort "#{vhost} doesn't exist" unless File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost_full}")
   abort "#{vhost} already enabled" if File.exist? File.join(conf['server_conf'], 'sites-enabled', "#{vhost_full}")
@@ -177,6 +205,21 @@ if options[:disable]
   abort "#{vhost} not enabled" unless File.exist? File.join(conf['server_conf'], 'sites-enabled', "#{vhost_full}")
   File.unlink File.join(conf['server_conf'], 'sites-enabled', "#{vhost_full}")
   puts "#{vhost} disabled"
+end
+
+if options[:list]
+  puts "Sites available:"
+  system "ls", File.join(conf['server_conf'], 'sites-available')
+  puts "\nSites enabled:"
+  system "ls", File.join(conf['server_conf'], 'sites-enabled')
+end
+
+if options[:lista]
+  system "ls", File.join(conf['server_conf'], 'sites-available')
+end
+
+if options[:liste]
+  system "ls", File.join(conf['server_conf'], 'sites-enabled')
 end
 
 puts `#{conf['restart_cmd']}` if options[:restart]
