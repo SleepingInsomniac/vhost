@@ -120,10 +120,9 @@ args = OptionParser.new do |opts|
 end.parse!
 
 test_path = File.join(conf['server_conf'], 'sites-available', "#{ARGV[0]}*")
-puts test_path
-test_name = Dir[test_name].first
+test_name = Dir[test_path].first
+
 if test_name
-  puts "found #{test_name}"
   vhost = File.basename(test_name, '.conf')
   vhost_full = File.basename(test_name)
 else
