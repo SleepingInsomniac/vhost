@@ -6,7 +6,7 @@ require 'optparse'
 require 'erubis'
 require 'yaml'
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 CONF_NAME = "vhosts.yml"
 CONFIG_PATHS = [
   'vhosts-conf',
@@ -79,9 +79,8 @@ args = OptionParser.new do |opts|
     exit 
   end
   
-  opts.on "--show KEY", "Shows the configuration value for KEY" do |k|
-    puts conf[k]
-    exit
+  opts.on "-s", "--show", "Shows the configuration value for KEY" do |k|
+    options[:show] = k
   end
   
   opts.on "--conf KEY=VALUE", "Change configuration" do |e|
@@ -100,6 +99,7 @@ args = OptionParser.new do |opts|
   end
   
   opts.on "-t TEMPLATE", "--template TEMPLATE", "Use template" do |t|
+    t = t.gsub(/\.erb|\.conf/i, '') + ".conf.erb"
     conf['default_template'] = t
     options[:template] = true
   end
@@ -119,8 +119,22 @@ args = OptionParser.new do |opts|
   
 end.parse!
 
-vhost = ARGV[0].gsub(/\.conf/, "") if ARGV[0]
-vhost_full = "#{vhost}.conf"
+test_path = File.join(conf['server_conf'], 'sites-available', "#{ARGV[0]}*")
+puts test_path
+test_name = Dir[test_name].first
+if test_name
+  puts "found #{test_name}"
+  vhost = File.basename(test_name, '.conf')
+  vhost_full = File.basename(test_name)
+else
+  vhost = ARGV[0].gsub(/\.conf/, "") if ARGV[0]
+  vhost_full = "#{vhost}.conf"
+end
+
+if options[:show]
+  abort "#{vhost} doesn't exist" unless File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost_full}")
+  puts File.expand_path vhost_full
+end
 
 if options[:create]
   abort "#{vhost} exists!" if File.exist? File.join(conf['server_conf'], 'sites-available', "#{vhost_full}")
@@ -146,7 +160,6 @@ end
 if options[:modify]
   if options[:template]
     t = conf['default_template']
-    t = t.gsub(/\.erb|\.conf/i, '') + ".conf.erb"
     system conf['editor'], File.join(config_path, 'templates', t)
   else
     system conf['editor'], "#{File.join(conf['server_conf'], 'sites-available', "#{vhost_full}")}"
