@@ -1,4 +1,5 @@
-# vhost
+#Vhost [![Gem Version](https://badge.fury.io/rb/vhost.svg)](http://badge.fury.io/rb/vhost)
+
 A simple way to manage virtual hosts in nginx, apache, or other server software.  
 Create, delete, enable, and disable vitual hosts.
 
