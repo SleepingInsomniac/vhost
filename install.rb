@@ -33,9 +33,12 @@ end.parse!
 prefix = options[:prefix] || '/usr/local'
 
 unless options[:config]
-  FileUtils.copy 'vhost', File.join(prefix, 'bin/vhost')
+  FileUtils.copy 'bin/vhost', File.join(prefix, 'bin/vhost')
   File.chmod 0755, File.join(prefix, "bin/vhost")
-  puts "Installed vhost at #{prefix}"
+  puts "Installed vhost at #{File.join(prefix, 'bin')}"
+  
+  FileUtils.copy 'lib/vhost.rb', File.join(prefix, 'lib/vhost.rb')
+  puts "Installed vhost at #{File.join(prefix, 'lib')}"
 end
 
 FileUtils.rm_r File.join(prefix, 'etc/vhosts-conf') if options[:overwrite]

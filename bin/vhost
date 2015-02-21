@@ -1,0 +1,147 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+require 'optparse'
+require 'colorize'
+require_relative '../lib/vhost.rb'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: vhost NAME [options]"
+  
+  opts.on "-c", "--create", "Create vhost"                  do |o| options[:create]  = o end
+  opts.on "-m", "--modify", "--edit", "Modify vhost"        do |o| options[:modify]  = o end
+  opts.on "-e", "--enable", "Enable vhost"                  do |o| options[:enable]  = o end
+  opts.on "-d", "--disable", "Disable vhost"                do |o| options[:disable] = o end
+  opts.on "--delete", "delete vhost"                        do |o| options[:delete]  = o end
+  opts.on "-r", "--restart", "Run server restart command"   do |o| options[:restart] = o end
+  opts.on "--create-folder", "create site folder structure" do |o| options[:folder]  = o end
+  opts.on "-p", "--path", "Show a site folder's path"       do |o| options[:path]    = o end
+  opts.on "-l", "--list", "List sites"                      do |o| options[:list]    = o end
+  opts.on "--list-available", "List sites available"        do |o| options[:lista]   = o end
+  opts.on "--list-enabled", "List sites enabled"            do |o| options[:liste]   = o end
+  opts.on "-i", "--info", "Show vhost info"                 do |o| options[:info]    = o end
+
+  # ==========================
+  # = Configuration Options: =
+  # ==========================
+  
+  opts.separator ""
+  opts.separator "Configuration options:"
+  
+  opts.on "-q", "--quiet", "Surpress output"                do |o| options[:quiet] = o end
+  
+  opts.on "--edit-conf", "Edit vhosts.yml" do |o|
+    system Vhost.conf['editor'], Vhost.conf_file
+    exit
+  end
+  
+  opts.on "--conf KEY=VALUE", "Change configuration" do |e|
+    e = e.split("=")
+    Vhost.conf[e[0]] = e[1]
+    Vhost.save_conf
+    exit
+  end
+  
+  # ==================
+  # = Common Options =
+  # ==================
+  
+  opts.separator ""
+  opts.separator "Common options:"
+  
+  opts.on "-v", "--version", "Print version" do
+    puts "vhost - version #{Vhost::VERSION}", "https://github.com/SleepingInsomniac/vhost"
+    exit
+  end
+  
+  opts.on "-h", "--help", "Prints this help" do
+    puts opts
+    exit
+  end
+  
+end.parse!
+
+abort "Usage:\tvhost NAME [options]\n\tvhost -h for more information" if options.empty? and ARGV[0].nil?
+
+@options = options
+def puts(*args)
+  super(*args) unless @options[:quiet]
+end
+
+if options[:create]
+  vhost = Vhost.find(ARGV[0])
+  abort "#{vhost.basename} exists!" if Vhost.find(ARGV[0])
+  puts "#{vhost.basename} created" if Vhost.create(ARGV[0])
+end
+
+vhost = Vhost.find(ARGV[0])
+abort "#{ARGV[0]} doesn't exist" unless vhost
+abort "#{vhost.basename} exists" if options.empty? and not ARGV[0].nil?
+
+if options[:show]
+  puts vhost.paths[:available]
+end
+
+if options[:delete]
+  print "Really delete #{vhost.basename}? [y/n]: "
+  confirm = STDIN.gets.chomp
+  if confirm =~ /y/i
+    vhost.delete!
+    puts "#{vhost.basename} deleted"
+    exit
+  end
+end
+
+if options[:modify]
+  system Vhost.conf['editor'], vhost.paths[:available]
+end
+
+if options[:folder]
+  structure = ['/', '/public', '/log']
+  structure.each do |folder|
+    folder = File.join(Vhost.conf['sites_folder'], vhost.basename, folder)
+    FileUtils.mkdir_p folder
+    puts "Created #{folder}"
+  end
+end
+
+if options[:path]
+  puts File.join(Vhost.conf['sites_folder'], vhost.basename)
+end
+
+if options[:enable]
+  abort "#{vhost.basename} already enabled" if vhost.enabled?
+  vhost.enable
+  puts "#{vhost.basename} Enabled"
+end
+
+if options[:disable]
+  abort "#{vhost.basename} not enabled" unless vhost.enabled?
+  vhost.disable
+  puts "#{vhost.basename} disabled"
+end
+
+if options[:list]
+  puts "Sites available:"
+  system "ls", File.join(Vhost.conf['server_conf'], 'sites-available')
+  puts "\nSites enabled:"
+  system "ls", File.join(Vhost.conf['server_conf'], 'sites-enabled')
+end
+
+if options[:lista]
+  system "ls", File.join(Vhost.conf['server_conf'], 'sites-available')
+end
+
+if options[:liste]
+  system "ls", File.join(Vhost.conf['server_conf'], 'sites-enabled')
+end
+
+if options[:info]
+  puts "Name: #{vhost.basename}"
+  puts "Config: #{vhost.paths[:available]}"
+  puts "Enabled: #{vhost.enabled?}"
+  puts "Folder: #{vhost.paths[:folder]}"
+end
+
+puts `#{Vhost.conf['restart_cmd']}` if options[:restart]
