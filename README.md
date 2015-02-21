@@ -13,9 +13,9 @@ vhost requires ruby to be installed
 	
 ###*nix:
 
-	wget https://github.com/SleepingInsomniac/vhost/archive/1.0.2.tar.gz
-	tar -zxvf 1.0.2.tar.gz
-	cd vhost-1.0.2
+	curl -L http://alexc.link/vhost-latest -o vhost.tar.gz
+	tar -zxvf vhost.tar.gz
+	cd vhost*
 	sudo ./install.rb
 
 ##Examples:

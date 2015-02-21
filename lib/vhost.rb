@@ -9,31 +9,51 @@ class Vhost
   require 'erubis'
   require 'yaml'
   
-  VERSION = "1.1.1"
+  VERSION = "1.1.2"
   CONF_NAME = "vhosts.yml"
   CONFIG_PATHS = [
     'vhosts-conf',
+    '../vhosts-conf',
     '../etc/vhosts-conf',
     '/usr/local/etc/vhosts-conf',
     '/etc/vhosts-conf'
   ]
-    
+  
+  DEFAULT_TEMPLATE = <<-TEMPLATE
+    <% site_root = File.join(conf['sites_folder'], vhost, "public") %>
+    <% site_name = vhost %>
+    server {
+    	listen 80;
+    	root <%= site_root %>;
+    	server_name <%= site_name %>;
+    	index index.html;
+    }
+  TEMPLATE
+  
+  DEFAULT_CONFIG = {
+    'server_conf'      => '/usr/local/etc/nginx',
+    'sites_folder'     => '/var/www',
+    'default_template' => nil,
+    'restart_cmd'      => 'sudo nginx -s reload',
+    'editor:'          => 'emacs'
+  }.to_yaml
+  
   def self.load_conf(paths = CONFIG_PATHS)
     Dir.chdir File.expand_path(File.dirname(__FILE__))
     @@config_path = CONFIG_PATHS.select { |path| File.exist? path }.first
-    raise "Can't find configuration!\nSearch locations:\n#{CONFIG_PATHS.join("\n")}" if @@config_path.nil?
+    puts "Can't find configuration!\nSearch locations:\n#{CONFIG_PATHS.join("\n")}" if @@config_path.nil?
     @@config_file = File.join(@@config_path, 'vhosts.yml')
     
-    conf = YAML.load_file @@config_file
-    conf['server_conf']      ||= '/usr/local/etc/nginx'
-    conf['sites_folder']     ||= '/var/www'
-    conf['default_template'] ||= 'nginx.conf.erb'
-    conf['editor']           ||= 'open'
+    begin
+      @@conf = YAML.load_file @@config_file
+    rescue
+      @@conf = YAML.parse DEFAULT_CONFIG
+    end
     
-    conf
+    @@conf
   end
   
-  @@conf = self.load_conf
+  self.load_conf
   @@available_path = File.join(@@conf['server_conf'], 'sites-available')
   @@enabled_path   = File.join(@@conf['server_conf'], 'sites-enabled')
   
@@ -77,7 +97,12 @@ class Vhost
     return false if Vhost.find(name)
       
     File.open File.join(@@available_path, "#{name}.conf"), "w" do |f|
-      template = Erubis::Eruby.new File.read(File.join(@@config_path, 'templates', @@conf['default_template']))    
+      begin
+        template = Erubis::Eruby.new File.read(File.join(@@config_path, 'templates', @@conf['default_template']))
+      rescue
+        puts "Error: No template found, Using default template"
+        template = Erubis::Eruby.new DEFAULT_TEMPLATE
+      end
       f.write template.result(vhost: name, conf: @@conf)
     end
     
