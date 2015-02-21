@@ -11,6 +11,15 @@ vhost requires ruby to be installed
 	brew tap sleepinginsomniac/formulae
 	brew install vhost
 	
+###Rubygems
+
+	gem install vhost
+	
+###Gemspec
+	
+	gem build vhost.gemspec
+	gem install ./vhost*.gem
+	
 ###*nix:
 
 	curl -L http://alexc.link/vhost-latest -o vhost.tar.gz
