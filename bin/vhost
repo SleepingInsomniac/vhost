@@ -21,6 +21,7 @@ OptionParser.new do |opts|
   opts.on "--list-available", "List sites available"        do |o| options[:lista]   = o end
   opts.on "--list-enabled", "List sites enabled"            do |o| options[:liste]   = o end
   opts.on "-i", "--info", "Show vhost info"                 do |o| options[:info]    = o end
+  opts.on "-f", "--folder", "Show folder"                   do |o| options[:show]    = o end
 
   # ==========================
   # = Configuration Options: =
@@ -36,10 +37,14 @@ OptionParser.new do |opts|
     exit
   end
   
-  opts.on "--conf KEY=VALUE", "Change configuration" do |e|
-    e = e.split("=")
-    Vhost.conf[e[0]] = e[1]
-    Vhost.save_conf
+  opts.on "--conf [KEY | KEY=VALUE]", "Change/show configuration" do |e|
+    if e =~ /\=/i
+      e = e.split("=")
+      Vhost.conf[e[0]] = e[1]
+      Vhost.save_conf
+    else
+      puts Vhost.conf[e]
+    end
     exit
   end
   
@@ -72,16 +77,13 @@ end
 if options[:create]
   vhost = Vhost.find(ARGV[0])
   abort "#{vhost.basename} exists!" if Vhost.find(ARGV[0])
-  puts "#{vhost.basename} created" if Vhost.create(ARGV[0])
+  vhost = Vhost.create(ARGV[0])
+  puts "#{vhost.basename} created" if vhost
 end
 
 vhost = Vhost.find(ARGV[0])
 abort "#{ARGV[0]} doesn't exist" unless vhost
 abort "#{vhost.basename} exists" if options.empty? and not ARGV[0].nil?
-
-if options[:show]
-  puts vhost.paths[:available]
-end
 
 if options[:delete]
   print "Really delete #{vhost.basename}? [y/n]: "
@@ -142,6 +144,10 @@ if options[:info]
   puts "Config: #{vhost.paths[:available]}"
   puts "Enabled: #{vhost.enabled?}"
   puts "Folder: #{vhost.paths[:folder]}"
+end
+
+if options[:show]
+  puts vhost.paths[:folder]
 end
 
 puts `#{Vhost.conf['restart_cmd']}` if options[:restart]
