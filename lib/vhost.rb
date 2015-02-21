@@ -9,7 +9,7 @@ class Vhost
   require 'erubis'
   require 'yaml'
   
-  VERSION = "1.1.2"
+  VERSION = "1.1.3"
   CONF_NAME = "vhosts.yml"
   CONFIG_PATHS = [
     'vhosts-conf',
