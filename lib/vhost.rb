@@ -9,7 +9,7 @@ class Vhost
   require 'erubis'
   require 'yaml'
   
-  VERSION = "1.1.3"
+  VERSION = "1.1.4"
   CONF_NAME = "vhosts.yml"
   CONFIG_PATHS = [
     'vhosts-conf',
@@ -63,6 +63,10 @@ class Vhost
   
   def self.conf_file
     @@config_file
+  end
+  
+  def self.conf_path
+    @@config_path
   end
   
   def self.save_conf

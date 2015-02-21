@@ -22,6 +22,7 @@ OptionParser.new do |opts|
   opts.on "--list-enabled", "List sites enabled"            do |o| options[:liste]   = o end
   opts.on "-i", "--info", "Show vhost info"                 do |o| options[:info]    = o end
   opts.on "-f", "--folder", "Show folder"                   do |o| options[:show]    = o end
+  opts.on "-t FILE", "--template FILE", "Use template"      do |o| options[:temp]    = o end
 
   # ==========================
   # = Configuration Options: =
@@ -72,6 +73,20 @@ abort "Usage:\tvhost NAME [options]\n\tvhost -h for more information" if options
 @options = options
 def puts(*args)
   super(*args) unless @options[:quiet]
+end
+
+if options[:temp]
+  
+  template = Dir[File.join(Vhost.conf_path, 'templates', "#{options[:temp]}*")].first
+  abort "Can't find that template" unless template
+  
+  if options[:modify]
+    system Vhost.conf['editor'], template
+    exit
+  end
+  
+  Vhost.conf['default_template'] = File.basename(template)
+  
 end
 
 if options[:create]
