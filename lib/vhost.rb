@@ -9,7 +9,7 @@ class Vhost
   require 'erubis'
   require 'yaml'
   
-  VERSION = "1.1.4"
+  VERSION = "1.1.5"
   CONF_NAME = "vhosts.yml"
   CONFIG_PATHS = [
     'vhosts-conf',
@@ -76,11 +76,11 @@ class Vhost
   end
   
   def self.available
-    Dir[File.join(@@available_path, '*')]
+    Dir[File.join(@@available_path, '*')].keep_if { |v| File.basename(v) =~ /\A[^\.].*[^\#\~]\Z/ }
   end
   
   def self.enabled
-    Dir[File.join(@@enabled_path, '*')]
+    Dir[File.join(@@enabled_path, '*')].keep_if { |v| File.basename(v) =~ /\A[^\.].*[^\#\~]\Z/ }
   end
   
   def self.all
@@ -133,6 +133,14 @@ class Vhost
     File.basename(@name, ".conf")
   end
   
+  def path
+    @paths[:available]
+  end
+  
+  def folder
+    @paths[:folder]
+  end
+  
   def enabled?
     File.exist? @paths[:enabled]
   end
@@ -154,6 +162,13 @@ class Vhost
   
   def to_s
     basename
+  end
+  
+  def <=> (other)
+    return -1 if self.enabled? and not other.enabled?
+    return self.name <=> other.name if (self.enabled? and other.enabled?) or (not self.enabled? and not other.enabled?)
+    return 1 if not self.enabled? and other.enabled?
+    nil
   end
   
 end

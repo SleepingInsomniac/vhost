@@ -38,12 +38,12 @@ unless options[:config]
   puts "Installed vhost at #{File.join(prefix, 'bin')}"
   
   FileUtils.copy 'lib/vhost.rb', File.join(prefix, 'lib/vhost.rb')
-  puts "Installed vhost at #{File.join(prefix, 'lib')}"
+  puts "Installed vhost class at #{File.join(prefix, 'lib')}"
 end
 
 FileUtils.rm_r File.join(prefix, 'etc/vhosts-conf') if options[:overwrite]
 
 unless File.exist? File.join(prefix, 'etc/vhosts-conf')
   FileUtils.cp_r 'vhosts-conf', File.join(prefix, 'etc/vhosts-conf')
-  puts "Installed configuration at #{prefix}"
+  puts "Installed vhost configuration at #{prefix}"
 end

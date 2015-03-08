@@ -98,7 +98,15 @@ end
 
 vhost = Vhost.find(ARGV[0])
 abort "#{ARGV[0]} doesn't exist" unless vhost
-abort "#{vhost.basename} exists" if options.empty? and not ARGV[0].nil?
+
+if options.empty? and not ARGV[0].nil?
+  # abort "#{vhost.basename} exists"
+  puts "  Name: #{vhost.name}"
+  print "Status: "
+  puts vhost.enabled? ? "Enabled".green : "Disabled".red
+  puts "  Path: #{vhost.path}"
+  puts "Folder: #{vhost.folder}"
+end
 
 if options[:delete]
   print "Really delete #{vhost.basename}? [y/n]: "
@@ -140,18 +148,22 @@ if options[:disable]
 end
 
 if options[:list]
-  puts "Sites available:"
-  system "ls", File.join(Vhost.conf['server_conf'], 'sites-available')
-  puts "\nSites enabled:"
-  system "ls", File.join(Vhost.conf['server_conf'], 'sites-enabled')
+  Vhost.all.sort { |v1,v2| v1 <=> v2 }.each do |v|
+    puts v.enabled? ? " Enabled: #{File.basename(v.path)}".green : "Disabled: #{File.basename(v.path)}".red
+  end
 end
 
 if options[:lista]
-  system "ls", File.join(Vhost.conf['server_conf'], 'sites-available')
+  Vhost.all.each do |v|
+    puts v.path
+  end
 end
 
 if options[:liste]
-  system "ls", File.join(Vhost.conf['server_conf'], 'sites-enabled')
+  # system "ls", File.join(Vhost.conf['server_conf'], 'sites-enabled')
+  Vhost.all.each do |v|
+    puts v.path if v.enabled?
+  end
 end
 
 if options[:info]

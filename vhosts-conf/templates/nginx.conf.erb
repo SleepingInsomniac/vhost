@@ -2,7 +2,6 @@
 <% site_name = vhost %>
 <% error_log = File.join(conf['sites_folder'], vhost, "log", "nginx-error.log") %>
 <% access_log = File.join(conf['sites_folder'], vhost, "log", "nginx-access.log") %>
-
 server {
 	listen 80;
 	
@@ -16,7 +15,7 @@ server {
 	location / {
 		# include /usr/local/etc/nginx/conf.d/php-fpm; # enable php
 		# passenger_enabled on # enabled passenger for rack based apps
-		# autoindex on; # just for development
+		# autoindex on; # show index of pages
 	}
 	
 }
